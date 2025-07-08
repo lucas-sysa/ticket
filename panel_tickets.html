@@ -11,10 +11,6 @@
       background-color: #f2f2f2;
     }
 
-    h1 {
-      color: #333;
-    }
-
     .filtros, table {
       background: white;
       padding: 15px;
@@ -23,7 +19,7 @@
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
 
-    select, button {
+    select, input[type="text"], button {
       margin-top: 10px;
       padding: 10px;
       width: 100%;
@@ -46,8 +42,25 @@
       background-color: #e0e0e0;
     }
 
+    .prioridad-Alta {
+      background-color: #ffb3b3;
+    }
+
+    .prioridad-Media {
+      background-color: #fff0b3;
+    }
+
+    .prioridad-Baja {
+      background-color: #d9fdd3;
+    }
+
     .estado {
       width: 100%;
+    }
+
+    .comentario-input {
+      width: 100%;
+      height: 40px;
     }
   </style>
 </head>
@@ -55,6 +68,9 @@
   <h1>Panel de Administración de Tickets</h1>
 
   <div class="filtros">
+    <label>Buscar por usuario:</label>
+    <input type="text" id="buscarUsuario" placeholder="Ingresá nombre..." oninput="cargarTickets()">
+
     <label for="filtroEstado">Filtrar por estado:</label>
     <select id="filtroEstado" onchange="cargarTickets()">
       <option value="">Todos</option>
@@ -80,17 +96,21 @@
         <th>ID</th>
         <th>Fecha</th>
         <th>Usuario</th>
+        <th>Sector</th>
         <th>Problema</th>
+        <th>Imagen</th>
         <th>Prioridad</th>
         <th>Estado</th>
+        <th>Comentario</th>
         <th>Acción</th>
+        <th>Eliminar</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbx6siltZaG6RNB69rduEKr_YIjkg5YyQ-IjQxv3qHug-n1VpklO0xtUkovv318PNowewA/exec'; // ← Reemplazar por tu URL real
+    const scriptURL = 'TU_URL_SCRIPT_GOOGLE'; // Reemplazar por la URL real
     const tableBody = document.querySelector("#ticketTable tbody");
 
     function cargarTickets() {
@@ -99,21 +119,27 @@
         .then(data => {
           const filtroEstado = document.getElementById("filtroEstado").value;
           const filtroPrioridad = document.getElementById("filtroPrioridad").value;
+          const buscarUsuario = document.getElementById("buscarUsuario").value.toLowerCase();
+
           tableBody.innerHTML = "";
 
           data.forEach((ticket, index) => {
             if (
               (filtroEstado === "" || ticket.estado === filtroEstado) &&
-              (filtroPrioridad === "" || ticket.prioridad === filtroPrioridad)
+              (filtroPrioridad === "" || ticket.prioridad === filtroPrioridad) &&
+              (ticket.usuario.toLowerCase().includes(buscarUsuario))
             ) {
               const row = document.createElement("tr");
+              row.className = `prioridad-${ticket.prioridad}`;
+
               row.innerHTML = `
                 <td>${index + 1}</td>
-                <td>${ticket.fecha}</td>
+                <td>${ticket.fecha || ""}</td>
                 <td>${ticket.usuario}</td>
+                <td>${ticket.sector || ""}</td>
                 <td>${ticket.problema}</td>
+                <td>${ticket.imagen ? `<a href="${ticket.imagen}" target="_blank">Ver</a>` : '—'}</td>
                 <td>${ticket.prioridad}</td>
-                <td>${ticket.estado}</td>
                 <td>
                   <select class="estado" onchange="actualizarEstado(${index + 1}, this.value)">
                     <option ${ticket.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
@@ -121,6 +147,9 @@
                     <option ${ticket.estado === 'Resuelto' ? 'selected' : ''}>Resuelto</option>
                   </select>
                 </td>
+                <td><input class="comentario-input" placeholder="Escribir comentario..." onchange="guardarComentario(${index + 1}, this.value)" /></td>
+                <td><button onclick="actualizarEstado(${index + 1}, 'Resuelto')">✅</button></td>
+                <td><button onclick="eliminarTicket(${index + 1})">🗑️</button></td>
               `;
               tableBody.appendChild(row);
             }
@@ -132,16 +161,36 @@
       fetch(scriptURL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ id, nuevoEstado })
-      })
-      .then(() => cargarTickets());
+        body: new URLSearchParams({ accion: "estado", id, estado: nuevoEstado })
+      }).then(() => cargarTickets());
+    }
+
+    function guardarComentario(id, comentario) {
+      fetch(scriptURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ accion: "comentario", id, comentario })
+      });
+    }
+
+    function eliminarTicket(id) {
+      if (confirm("¿Eliminar este ticket?")) {
+        fetch(scriptURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ accion: "eliminar", id })
+        }).then(() => cargarTickets());
+      }
     }
 
     function exportarExcel() {
       window.open(scriptURL + '?exportar=1', '_blank');
     }
 
+    // Auto-refresh cada 30 segundos
+    setInterval(cargarTickets, 30000);
     window.addEventListener("load", cargarTickets);
   </script>
 </body>
 </html>
+
