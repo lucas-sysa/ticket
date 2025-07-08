@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crear Ticket</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, textarea, select, button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #mensaje {
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">Crear un nuevo ticket</h2>
+
+  <form id="ticketForm">
+    <input type="text" id="usuario" placeholder="Nombre del usuario" required />
+    <textarea id="problema" placeholder="Describí el problema" required></textarea>
+    <label for="prioridad">Prioridad:</label>
+    <select id="prioridad">
+      <option value="Baja">Baja</option>
+      <option value="Media">Media</option>
+      <option value="Alta">Alta</option>
+    </select>
+    <button type="submit">Enviar Ticket</button>
+  </form>
+
+  <div id="mensaje"></div>
+  <audio id="beep" src="https://www.soundjay.com/buttons/sounds/button-10.mp3" preload="auto"></audio>
+
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbx6siltZaG6RNB69rduEKr_YIjkg5YyQ-IjQxv3qHug-n1VpklO0xtUkovv318PNowewA/exec'; // ← Reemplazar por tu URL real
+
+    const form = document.getElementById("ticketForm");
+    const mensaje = document.getElementById("mensaje");
+    const beep = document.getElementById("beep");
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const data = {
+        usuario: document.getElementById("usuario").value,
+        problema: document.getElementById("problema").value,
+        prioridad: document.getElementById("prioridad").value,
+      };
+
+      fetch(scriptURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(data)
+      })
+      .then(() => {
+        mensaje.innerText = "✅ Ticket enviado correctamente.";
+        form.reset();
+        beep.play();
+      })
+      .catch(() => {
+        mensaje.innerText = "❌ Error al enviar el ticket.";
+      });
+    });
+  </script>
+</body>
+</html>
