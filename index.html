@@ -44,13 +44,20 @@
 
   <form id="ticketForm">
     <input type="text" id="usuario" placeholder="Nombre del usuario" required />
+    <input type="text" id="sector" placeholder="Sector o ubicación" required />
     <textarea id="problema" placeholder="Describí el problema" required></textarea>
+
     <label for="prioridad">Prioridad:</label>
-    <select id="prioridad">
+    <select id="prioridad" required>
+      <option value="">Seleccione una prioridad</option>
       <option value="Baja">Baja</option>
       <option value="Media">Media</option>
       <option value="Alta">Alta</option>
     </select>
+
+    <label for="imagen">Adjuntar imagen:</label>
+    <input type="file" id="imagen" accept="image/*" />
+
     <button type="submit">Enviar Ticket</button>
   </form>
 
@@ -58,34 +65,38 @@
   <audio id="beep" src="https://www.soundjay.com/buttons/sounds/button-10.mp3" preload="auto"></audio>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbx6siltZaG6RNB69rduEKr_YIjkg5YyQ-IjQxv3qHug-n1VpklO0xtUkovv318PNowewA/exec'; // ← Reemplazar por tu URL real
-
     const form = document.getElementById("ticketForm");
     const mensaje = document.getElementById("mensaje");
     const beep = document.getElementById("beep");
+    const scriptURL = 'TU_URL_SCRIPT_GOOGLE'; // reemplazar
 
-    form.addEventListener("submit", function (e) {
+    form.addEventListener("submit", async function (e) {
       e.preventDefault();
-      const data = {
-        usuario: document.getElementById("usuario").value,
-        problema: document.getElementById("problema").value,
-        prioridad: document.getElementById("prioridad").value,
-      };
 
-      fetch(scriptURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(data)
-      })
-      .then(() => {
-        mensaje.innerText = "✅ Ticket enviado correctamente.";
-        form.reset();
-        beep.play();
-      })
-      .catch(() => {
-        mensaje.innerText = "❌ Error al enviar el ticket.";
-      });
+      const usuario = document.getElementById("usuario").value;
+      const problema = document.getElementById("problema").value;
+      const prioridad = document.getElementById("prioridad").value;
+      const sector = document.getElementById("sector").value;
+      const fecha = new Date().toLocaleString();
+      const imagen = document.getElementById("imagen").files[0];
+
+      const formData = new FormData();
+      formData.append("usuario", usuario);
+      formData.append("problema", problema);
+      formData.append("prioridad", prioridad);
+      formData.append("sector", sector);
+      formData.append("fecha", fecha);
+      formData.append("imagen", imagen || "");
+
+      fetch(scriptURL, { method: "POST", body: formData })
+        .then(() => {
+          mensaje.innerText = "✅ Ticket enviado correctamente.";
+          form.reset();
+          beep.play();
+        })
+        .catch(() => mensaje.innerText = "❌ Error al enviar el ticket.");
     });
   </script>
 </body>
 </html>
+
