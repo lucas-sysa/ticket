@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel de Tickets</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f2f2f2;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .filtros, table {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    select, button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      border-radius: 5px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+
+    th {
+      background-color: #e0e0e0;
+    }
+
+    .estado {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Panel de Administración de Tickets</h1>
+
+  <div class="filtros">
+    <label for="filtroEstado">Filtrar por estado:</label>
+    <select id="filtroEstado" onchange="cargarTickets()">
+      <option value="">Todos</option>
+      <option value="Pendiente">Pendiente</option>
+      <option value="En Proceso">En Proceso</option>
+      <option value="Resuelto">Resuelto</option>
+    </select>
+
+    <label for="filtroPrioridad">Filtrar por prioridad:</label>
+    <select id="filtroPrioridad" onchange="cargarTickets()">
+      <option value="">Todas</option>
+      <option value="Baja">Baja</option>
+      <option value="Media">Media</option>
+      <option value="Alta">Alta</option>
+    </select>
+
+    <button onclick="exportarExcel()">Exportar a Excel</button>
+  </div>
+
+  <table id="ticketTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Fecha</th>
+        <th>Usuario</th>
+        <th>Problema</th>
+        <th>Prioridad</th>
+        <th>Estado</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbx6siltZaG6RNB69rduEKr_YIjkg5YyQ-IjQxv3qHug-n1VpklO0xtUkovv318PNowewA/exec'; // ← Reemplazar por tu URL real
+    const tableBody = document.querySelector("#ticketTable tbody");
+
+    function cargarTickets() {
+      fetch(scriptURL)
+        .then(res => res.json())
+        .then(data => {
+          const filtroEstado = document.getElementById("filtroEstado").value;
+          const filtroPrioridad = document.getElementById("filtroPrioridad").value;
+          tableBody.innerHTML = "";
+
+          data.forEach((ticket, index) => {
+            if (
+              (filtroEstado === "" || ticket.estado === filtroEstado) &&
+              (filtroPrioridad === "" || ticket.prioridad === filtroPrioridad)
+            ) {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${ticket.fecha}</td>
+                <td>${ticket.usuario}</td>
+                <td>${ticket.problema}</td>
+                <td>${ticket.prioridad}</td>
+                <td>${ticket.estado}</td>
+                <td>
+                  <select class="estado" onchange="actualizarEstado(${index + 1}, this.value)">
+                    <option ${ticket.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                    <option ${ticket.estado === 'En Proceso' ? 'selected' : ''}>En Proceso</option>
+                    <option ${ticket.estado === 'Resuelto' ? 'selected' : ''}>Resuelto</option>
+                  </select>
+                </td>
+              `;
+              tableBody.appendChild(row);
+            }
+          });
+        });
+    }
+
+    function actualizarEstado(id, nuevoEstado) {
+      fetch(scriptURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ id, nuevoEstado })
+      })
+      .then(() => cargarTickets());
+    }
+
+    function exportarExcel() {
+      window.open(scriptURL + '?exportar=1', '_blank');
+    }
+
+    window.addEventListener("load", cargarTickets);
+  </script>
+</body>
+</html>
